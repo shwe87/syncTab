@@ -83,6 +83,14 @@ if (saveTabs != null){
 }
 
 
+/*Handle the clear button*/
+var clearButton = document.getElementById('clear');
+if (clearButton != null){
+	clearButton.onclick = function(){
+		self.port.emit('clearAll','clear screen');
+	};
+}
+
 self.port.on('error',function(file){
 	var error = document.getElementById('error');
 	if (error != null){
@@ -323,7 +331,10 @@ window.addEventListener('click', function(event){
                  }                 
 }, false);
 
-
+String.prototype.capitalize = function() {
+	//capitalize the first letter.
+    	return this.charAt(0).toUpperCase() + this.slice(1);
+}
 
 
 //Clear the list
@@ -336,6 +347,12 @@ self.port.on('reset',function(message){
  		while (u.firstChild) {
     			u.removeChild(u.firstChild);
 		}
+	}
+	//All the buttons are saveTabs,saveBookmarks,etc. Capitalize the first letter
+	var button = 'save'+message.capitalize();
+	var saveButton = document.getElementById(button);
+	if (saveButton != null){
+		saveButton.style.display = "none";
 	}
 });
 
