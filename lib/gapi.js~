@@ -278,10 +278,10 @@ exports.refreshToken = function(){
 
 }
 
-exports.downloadData = function(fileName, downloadURL){
+exports.downloadData = function(fileName, downloadURL, token){
         var download = Request({
                 url: downloadURL,
-                headers: {'Authorization': 'Bearer '+ access_token},
+                headers: {'Authorization': 'Bearer '+ token},
                 onComplete: function(response){
                         console.log("downloadData: Downloaded data = " + fileName + "  " + response.text);
                         console.log("downloadData: status " + response.status);
@@ -313,7 +313,7 @@ exports.handleData = function(fileData){
 	
 	if (exists){
 		console.log('handleData: Existe ' + fileName);
-		this.downloadData(fileName, downloadURL);
+		this.downloadData(fileName, downloadURL, token);
 	}
 	else{
 		console.log('handleData: No EXISTE ' + fileName);

@@ -89,9 +89,24 @@ myPanel.port.on('historyClicked',function(message){
 });
 
 
+//If clear button is clicked:
+myPanel.port.on('clearAll',function(msg){
+	
+	myPanel.port.emit('reset','tabs');
+	myPanel.port.emit('reset','boookmarks');
+	myPanel.port.emit('reset','history');
+
+});
+
+
+
 function saveData(uploadData){
 	gapi.uploadFile(uploadData);
-	gapi.on('saveComplete','UPLOADED CORRECTLY!!!');	
+	gapi.on('saveComplete',function(uri){
+		myPanel.port.emit('showMessage','UPLOADED!!');
+	
+	
+	});	
 
 }
 
@@ -191,9 +206,11 @@ function handleSavedData(data){
 			
 		}
 		else if (fileName == 'bookmarks.json'){
+			myPanel.port.emit('reset','bookmarks');
 			myPanel.port.emit('takeBookmarks',fileData);
 		}
 		else{
+			myPanel.port.emit('reset','history');
 			myPanel.port.emit('takeHistory',fileData);
 		}
 	}
@@ -340,7 +357,8 @@ function listTabs() {
 
 
 //Get all the bookmarks
-function getBookmarks(){	
+function getBookmarks(){
+	myPanel.port.emit('reset','bookmarks');	
 	var folderIds = bookmarks.getFoldersId();
 	var allBookmarks = new Array();
 	for each (var id in folderIds){
@@ -378,6 +396,7 @@ function getBookmarks(){
 
 
 function getHistory(){
+	myPanel.port.emit('reset','history');
 	var historyList = history.queryHistory();
 	//console.log(listOfHistory.title);
 	return historyList;

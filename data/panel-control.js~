@@ -83,6 +83,14 @@ if (saveTabs != null){
 }
 
 
+/*Handle the clear button*/
+var clearButton = document.getElementById('clear');
+if (clearButton != null){
+	clearButton.onclick = function(){
+		self.port.emit('clearAll','clear screen');
+	};
+}
+
 self.port.on('error',function(file){
 	var error = document.getElementById('error');
 	if (error != null){
@@ -92,6 +100,12 @@ self.port.on('error',function(file){
 	}
 
 
+
+});
+
+self.port.on('showMessage',function(msg){
+	var message = document.getElementById('message');
+	message.innerHTML = msg;
 
 });
 
@@ -317,7 +331,9 @@ window.addEventListener('click', function(event){
                  }                 
 }, false);
 
-
+String.prototype.capitalize = function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+}
 
 
 //Clear the list
@@ -331,6 +347,7 @@ self.port.on('reset',function(message){
     			u.removeChild(u.firstChild);
 		}
 	}
+	var button = 'save'+message
 });
 
 
