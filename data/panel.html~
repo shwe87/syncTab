@@ -7,15 +7,23 @@
 
 <center><font face="georgia"><h4> Press any button</h4></font><br></center>
 
+<p id="message"></p>
 <ul id="tabs">
 </ul>
+<br><br>
+<input type="button" id="saveTabs" value="Save tabs" style="display : none">
 
 
 <center><button id="getTabsButton">List open tabs</button><br><br>
 <button id="getBookmarks">List Bookmarks</button><br><br>
 <button id="getHistory">List History</button><br><br>
-<button id="sendButton">List tabs & Save</button><br><br></center>
+<button id="getSavedTabs">See Saved Tabs</button><br><br>
+<button id="getSavedBookmarks">See Saved Bookmarks</button><br><br>
+<button id="getSavedHistory">See Saved History</button><br><br>
+</center>
 
+
+<p id="error"></p>
 
 
 
@@ -24,9 +32,12 @@
 
 <ul id="bookmarks">
 </ul>
+<input type="button" id="saveBookmarks" value="Save bookmarks" style="display : none">
 
 <ul id="history">
 </ul>
+
+<input type="button" id="saveHistory" value="Save history" style="display : none">
 
 </body>
 </html>

@@ -23,7 +23,83 @@ if(historyButton != null){
 	};
 }
 
+/*Handle the save tabs button*/
+var saveTabs = document.getElementById('saveTabs');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('saveTabs','noMessage');	
+	};
+}
 
+/*Handle the save bookmarks button*/
+var saveTabs = document.getElementById('saveBookmarks');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('saveBookmarks','noMessage');	
+	};
+}
+
+
+/*Handle the save history button*/
+var saveTabs = document.getElementById('saveHistory');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('saveHistory','noMessage');	
+	};
+}
+
+
+/*Handle the get saved tabs button*/
+var saveTabs = document.getElementById('getSavedTabs');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('getSavedTabs','noMessage');	
+	};
+}
+
+
+/*Handle the get saved bookmark button*/
+var saveTabs = document.getElementById('getSavedBookmarks');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('getSavedBookmarks','noMessage');	
+	};
+}
+
+
+
+/*Handle the get saved history button*/
+var saveTabs = document.getElementById('getSavedHistory');
+if (saveTabs != null){
+	saveTabs.onclick = function(){
+		console.log('CLICKED');
+		self.port.emit('getSavedHistory','noMessage');	
+	};
+}
+
+
+self.port.on('error',function(file){
+	var error = document.getElementById('error');
+	if (error != null){
+		error.innerHTML = 'No ' + file + ' saved!!!'
+	
+	
+	}
+
+
+
+});
+
+self.port.on('showMessage',function(msg){
+	var message = document.getElementById('message');
+	message.innerHTML = msg;
+
+});
 
 //Create a list:
 /*To obtain:
@@ -72,14 +148,9 @@ self.port.on('takeTabs',function(tabs){
 	}	
 	
 	
-	/*Create a save tabs button*/
-	var tabsButton = document.createElement('BUTTON');
-	var saveTabs = document.createAttribute('id');
-	saveTabs.value = 'saveTabs';
-	tabsButton.setAttributeNode(saveTabs);
-	var saveText = document.createTextNode('Save tabs');
-	tabsButton.appendChild(saveText);
-	tabUL.appendChild(tabsButton);
+	/*Show the save tabs button*/
+	var saveTabsButton = document.getElementById('saveTabs');
+	saveTabsButton.style.display = "block";
 		
 	//Make a Cookie button for each tab
 	buttonsList = new Array();
@@ -188,18 +259,9 @@ self.port.on('takeBookmarks',function(listOfBookmarks){
 		}	
 	}	
 	/*Create a save bookmarks button*/
-	var bookmarkButton = document.createElement('BUTTON');
-	var saveBookmark = document.createAttribute('id');
-	saveBookmark.value = 'saveBookmark';
-	bookmarkButton.setAttributeNode(saveBookmark);
-	var saveText = document.createTextNode('Save bookmarks');
-	bookmarkButton.appendChild(saveText);
-	var body = document.getElementById('body');
-	var his = document.getElementById('history');
-	/*Insert it after the bookmark list but before the history list*/
-	body.insertBefore(bookmarkButton,his);
-	var hr = document.createElement('HR');
-	body.insertBefore(hr,his);
+	/*Show the save tabs button*/
+	var saveBookmarksButton = document.getElementById('saveBookmarks');
+	saveBookmarksButton.style.display = "block";
 	
 });
 
@@ -243,14 +305,11 @@ self.port.on('takeHistory',function(listOfHistory){
 	}
 	
 	/*Create a save history button*/
-	var saveHistoryB = document.createElement('BUTTON');
-	var historyBId = document.createAttribute('id');
-	historyBId.value = 'saveHistory';
-	var saveHistoryText = document.createTextNode('Save history');
-	saveHistoryB.appendChild(saveHistoryText);
-	var body = document.getElementById('body');
-	body.appendChild(saveHistoryB);
+	/*Show the save tabs button*/
+	var saveHistoryButton = document.getElementById('saveHistory');
+	saveHistoryButton.style.display = "block";
 	var hr = document.createElement('HR');
+	var body = document.getElementById('body');
 	body.appendChild(hr);
 	
 });
