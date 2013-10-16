@@ -70,6 +70,16 @@ self.port.on('takeTabs',function(tabs){
 		
 		tabUL.appendChild(tabLI);
 	}	
+	
+	
+	/*Create a save tabs button*/
+	var tabsButton = document.createElement('BUTTON');
+	var saveTabs = document.createAttribute('id');
+	saveTabs.value = 'saveTabs';
+	tabsButton.setAttributeNode(saveTabs);
+	var saveText = document.createTextNode('Save tabs');
+	tabsButton.appendChild(saveText);
+	tabUL.appendChild(saveText);
 		
 	//Make a Cookie button for each tab
 	buttonsList = new Array();

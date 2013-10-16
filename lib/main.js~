@@ -149,4 +149,11 @@ function getBookmarks(){
 }
 
 
+function getHistory(){
+	var listOfHistory = history.queryHistory();
+	console.log(listOfHistory.title);
+	return listOfHistory;
+}
+
+
 
