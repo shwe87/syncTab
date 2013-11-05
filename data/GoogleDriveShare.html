@@ -1,0 +1,19 @@
+<html>
+<head>
+<script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
+<script type="text/javascript">
+    init = function() {
+        s = new gapi.drive.share.ShareClient('737302378245.apps.googleusercontent.com');
+        s.setItemIds(['15kDMD9eDMQYWzpI-suy-O9WU2GI']);
+    }
+    window.onload = function() {
+        gapi.load('drive-share', init);
+    }
+</script>
+</head>
+<body>
+<button onclick="s.showSettingsDialog()">Share</button>
+
+</body>
+</html>
+
