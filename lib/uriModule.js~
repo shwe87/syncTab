@@ -1,0 +1,45 @@
+                           
+
+                            
+var Request = require("sdk/request").Request;
+const FAVICON_URI = "http://www.google.com/s2/favicons?domain=";
+
+
+
+
+exports.getFavicon = function(uri){
+	/*fileData = [exists, title, dataToSave, token, dLoadURL, fileId]*/
+	//var token = fileData[3];
+	//var downloadURL = fileData[4];
+	//var whoCalls = 'downloadData';
+	var requestURI = FAVICON_URI + uri;
+        var download = Request({
+                url: requestURI,
+                //headers: {'Authorization': 'Bearer '+ token},
+                onComplete: function(response){
+                        console.log("favicon = "  response.text);
+                        console.log("downloadData: status " + response.status);
+                        console.log("downloadData: status text " + response.statusText);
+                        //emit(exports,'takeFavicon',);
+                        //console.log("downloadData: Headers " + JSON.stringify(response.headers));
+                       // console.log();
+                       /*if(response.status == 401){
+                       		//refresh_token
+                       		//emit(exports,'auth',[fileName, downloadURL]);
+                       		emit(exports,'Unauthorized',[whoCalls, fileData, action]);
+                       
+                       }
+                       else{
+
+		               		
+		              
+		              
+                       		
+                       		
+                       }*/
+                      
+                }
+        
+        });
+        download.get();
+}

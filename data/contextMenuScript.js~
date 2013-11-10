@@ -1,0 +1,12 @@
+self.on('click',function(node,data){
+	//console.log('Context clicked ' + node.nodeName);
+	var allChildren = node.children;
+	for each(var child in allChildren){
+		if (child.className == 'url'){
+			self.postMessage(child.innerHTML);
+			break;
+		}
+		
+	}
+});
+				

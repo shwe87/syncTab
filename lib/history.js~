@@ -34,12 +34,12 @@ exports.queryHistory = function(){
 	  nodeHistory.url = url;
 	  nodeHistory.visited = visited;
 	  nodeHistory.time = lastVisitedTimeInMicrosecs;
-	  /*if (iconURI != null){
+	  //if (iconURI != null){
 	  	var icn = iconURI.split('favicon');
 	  	/*console.log("icn " + icn);
 	  	iconURI = icn[1];
 	  	console.log("iconURI " + iconURI);*/
-	  //}
+	  }//
 	  nodeHistory.icon = iconURI;
 	  console.log('History = ' + JSON.stringify(nodeHistory));
 	  listOfHistory.push(nodeHistory);

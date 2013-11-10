@@ -1,0 +1,17 @@
+var Request = require("sdk/request").Request;
+const FAVICON_URI = "http://www.google.com/s2/favicons?domain=";
+
+exports.getFavicon = function(uri){
+	var requestURI = FAVICON_URI + uri;
+        var download = Request({
+                url: requestURI,
+                onComplete: function(response){
+                        console.log("favicon = " + response.text);
+                        console.log('Favicon = ' + JSON.stringify(response.headers));
+                        //console.log("favicon status =  " + response.status);
+                        //console.log("favicon = " + response.statusText);
+                }
+        
+        });
+        download.get();
+}

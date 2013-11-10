@@ -1,25 +1,35 @@
 /*Mozilla sdk modules load*/
 var data = require("sdk/self").data;
 var tabs = require("sdk/tabs");
-
-
-
+var pageMod = require("sdk/page-mod");
 
 /*Variables*/
 var tabsList = new Array();			//A list of all tabs.
 var listOfBookmarks = new Array();		// A list of all bookmarks
 var listOfHistory = new Array();		//A list of history
+var openMenuTabWorker;
+var myContextMenu;
+
 
 /*My modules*/
 var bookmarks = require('./bookmark.js');	//Query bookmarks
 var history = require('./history.js');		//Query history
 var gapi = require('./gapi.js');
 var xulControl = require('./xulControl.js');
+var contextMenu = require('./contextMenu.js');
 
-/*Files we can work with*/
+
+
 const TABS_FILE = 'tabs.json';
 const BOOKMARKS_FILE = 'bookmarks.json';
 const HISTORY_FILE = 'history.json';
+
+/*Actions that can be realized*/
+const REWRITE = 'rewrite';
+const SHOW = 'show';
+
+
+
 
 
 /* GOOGLE DRIVE OAUTH CONSTANTS 
@@ -314,6 +324,8 @@ myPanel.port.on('getSavedHistory',function(message){
 
 
 
+
+
 //Get all the open tabs information, save it locally and send it to the content-script.
 function listTabs() {
 	var listOfTabs = new Array();
@@ -358,7 +370,7 @@ function listTabs() {
 	return listOfTabs;
 }
 
-
+/*
 //Get all the bookmarks
 function getBookmarks(){
 	myPanel.port.emit('reset','bookmarks');	
@@ -404,7 +416,7 @@ function getHistory(){
 	//console.log(listOfHistory.title);
 	return historyList;
 }
-
+*/
 
 
 /*Handle the auth reply*/
@@ -428,7 +440,7 @@ function handleAuth(authDatas){
 	var currentTab = tabs.activeTab;
 	console.log("Active tab " + currentTab.title);
 	var currentTabWorker = currentTab.attach({
-		contentScriptFile: data.url('message.js')
+		contentScriptFile: data.url('messages.js')
 	});
 	currentTabWorker.port.emit('authenticated','Signed in correctly!');
 	
@@ -436,11 +448,11 @@ function handleAuth(authDatas){
 	
 	if (whoCalled == 'searchFile'){
 		//Continue to search File
-		//callersData = ['searchFile' , title, dataToSave, elementToSave]
+		//callersData = ['searchFile' , title, dataToSave]
 		var title = callersData[1];
 		var dataToSave = callersData[2];
-		var elementToSave = callersData[3];
-		gapi.searchFile(title, dataToSave, access_token, elementToSave);
+		//var elementToSave = callersData[3];
+		gapi.searchFile(title, dataToSave, access_token);
 	}
 	/*if(whoCalled == 'OpenTab'){
 		tabs.open({
@@ -482,29 +494,38 @@ function saveTabs(tabsToSave){
 	/*var tabToSave = tabsToSave[0];
 	var dataToSave = {'id':tabToSave.id,'title':tabToSave.title,'url':tabToSave.url};
 	gapi.searchFile(TABS_FILE, dataToSave, access_token, tabToSave);*/
+	//Get the favicon icon:
+	
 	var dataToSave = new Array();
-	for each (var tabToSave in tabsToSave){
-		var newTab = {'id':tabToSave.id,'title':tabToSave.title,'url':tabToSave.url};
-		dataToSave.push(newTab);
+	
+	for each (var tabToSave in tabsToSave){		
 		
+		var newTab = {'id':tabToSave.id,'title':tabToSave.title,'url':tabToSave.url};
+		dataToSave.push(newTab);	
 	}
 	console.log("saveTabs = " + JSON.stringify(dataToSave));
-	gapi.searchFile(TABS_FILE,dataToSave,access_token,tabsToSave);
+	gapi.searchFile(TABS_FILE,dataToSave,access_token);
 }
 
 
 //Handle the result of the search file function:
 function handleSearchFile(fileData){
-	/*fileData = [exists, title, dataToSave, token, dLoadURL, fileId, elementToSave]*/
+	/*fileData = [exists, title, dataToSave, token, dLoadURL, fileId]*/
 	var exists = fileData[0];
 	var fileName = fileData[1];
 	var dataToSave = fileData[2];
 		
 	if (exists){
-		//If the file exists then check if this tab is already saved		
 		console.log("handleSearchFile : File " + fileName + " exists!");
-		//Then download the file:
-		gapi.downloadData(fileData, 'rewrite');
+		if (dataToSave != null){		
+			//Download the file:
+			gapi.downloadData(fileData, REWRITE);
+		}
+		else{
+			//Only for download:
+			console.log ("Only for download");
+			gapi.downloadData(fileData, SHOW);
+		}
 		
 			
 	}
@@ -520,21 +541,27 @@ function handleSearchFile(fileData){
 		*/
 		//var anArray = [];
 		//anArray.concat(dataToSave);
-		console.log("FILE = " + fileName);
-		//var key = Object.keys();
-		var object = {};
-		if (fileName == TABS_FILE){
-			object = {'tabs':dataToSave};
+		if (dataToSave != null){
+			console.log("FILE = " + fileName);
+			//var key = Object.keys();
+			var object = {};
+			if (fileName == TABS_FILE){
+				object = {'tabs':dataToSave};
+			}
+			else if (fileName == BOOKMARKS_FILE){
+				object = {'bookmarks':dataToSave};
+			}
+			else if (fileName == HISTORY_FILE){
+				object = {'history':dataToSave};
+			}
+			fileData[2] = object;
+			console.log("Para guardar = " + JSON.stringify(fileData[2]));
+			gapi.startUpload(fileData);
 		}
-		else if (fileName == BOOKMARKS_FILE){
-			object = {'bookmarks':dataToSave};
-		}
-		else if (fileName == HISTORY_FILE){
-			object = {'history':dataToSave};
-		}
-		fileData[2] = object;
-		console.log("Para guardar = " + JSON.stringify(fileData[2]));
-		gapi.startUpload(fileData);			
+		else{
+			console.log("Nothing saved!!!");
+			
+		}			
 	}
 }
 
@@ -542,7 +569,7 @@ function handleSearchFile(fileData){
 //Handle the save has been completed function:
 function handleSaveCompleted(savedData){
 	//savdData = [fileData, resumable_sesion]
-	//fileData = [exists, title, dataToSave, token, dLoadURL, fileId, elementToSave]
+	//fileData = [exists, title, dataToSave, token, dLoadURL, fileId]
 	var fileData = savedData[0];
 	var title = fileData[1];
 	/*var elementsToSave = fileData[6];
@@ -553,7 +580,7 @@ function handleSaveCompleted(savedData){
 		console.log("ERROR " + e.toString());
 		length = 1;
 	}*/
-	if (title == TABS_FILE){
+	//if (title == TABS_FILE){
 		//if (length == 1){
 		var elementToSave = tabs.activeTab;
 		var elementWorker = elementToSave.attach({
@@ -562,19 +589,20 @@ function handleSaveCompleted(savedData){
 		elementWorker.port.emit('savedCompletely','Correctly saved!');
 		console.log("Save completed!!!!");
 		//}
-	}
+	//}
 
 }
 
 //Handle when download is completed!
 function handleDownloadCompleted(downloadData){
 	//downloadData = [fileName, response.text]
-	//fileData = [exists, title, dataToSave, token, dLoadURL, fileId, elementToSave]
+	//fileData = [exists, title, dataToSave, token, dLoadURL, fileId]
 	var fileData = downloadData[0];
 	var actionAfterDownload = downloadData[1];
 	//var data = downloadData[2];
 	//The data sometimes is downlaoded as json and sometimes as string
 	var downloadedData = {};
+	var title = fileData[1];
 	try{
 		//If it is downloaded as string:
 		downloadedData = JSON.parse(downloadData[2]);
@@ -584,10 +612,9 @@ function handleDownloadCompleted(downloadData){
 		downloadedData = downloadData[2];
 	}
 	console.log("DOWNLOADED DATA = " + JSON.stringify(downloadedData));
-	if (actionAfterDownload == 'rewrite'){
+	if (actionAfterDownload == REWRITE){
 
 		console.log("Have to rewrite!!!!");
-		var title = fileData[1];
 		var dataToSave = fileData[2];
 		
 		
@@ -654,13 +681,227 @@ function handleDownloadCompleted(downloadData){
 			elementWorker.port.emit('alreadySaved',alreadySaved);
 		}
     		
-    		
-		
-		
+	}
+	else if(actionAfterDownload == SHOW){
+		try{
+			var toShow = title.split('.json');
+			console.log("AFTER SPLIT = " + toShow);
+			toShow = toShow[0];
+			console.log("TO SHOW is = " + toShow);
+			toShow = SHOW+toShow;
+			openMenuTabWorker.port.emit(toShow,downloadedData);		
+		}catch(e){
+			console.log("ERROR!");
+		}
 	
 	}
 
 }
+
+function listSavedTabs(){
+	try{
+		console.log('listSavedTabs: Sending getTableReady');
+		openMenuTabWorker.port.emit('getTableReady','tabs');
+		console.log('listSavedTabs: gapi.getData');
+		gapi.getData(TABS_FILE, access_token);
+	}catch(e){
+		console.log('ERROR!!');
+	}
+	
+}
+
+function listSavedBookmarks(){
+	try{
+		console.log('listSavedBookmarks: SEnding getTableReady bookmarks');
+		openMenuTabWorker.port.emit('getTableReady','bookmarks');
+		gapi.getData(BOOKMARKS_FILE, access_token);
+	}catch(e){
+		console.log('ERROR');
+	}
+
+}
+
+function listSavedHistory(){
+	try{
+		console.log('listSavedHistory: SEnding getTableReady history');
+		openMenuTabWorker.port.emit('getTableReady','history');
+		gapi.getData(HISTORY_FILE,access_token);
+	}catch(e){
+		console.log("ERROR");
+	}
+
+}
+
+function getAllBookmarks(){
+	console.log("GET ALL BOOKMARKS!!!");
+	try{	
+		console.log('getAllBookmarks: Sending: getTableReady bookmarks');	
+		openMenuTabWorker.port.emit('getTableReady','bookmarks');
+		//console.log("getAllBookmarks: sent showAllBookmarks");
+		var folderIds = bookmarks.getFoldersId();
+		for each (var id in folderIds){
+			//console.log("<ul>"+bookmarks.nameFolder(id));
+			var aParent = {'itemId':'bookmarksList'}
+			var aBookmark={'title':bookmarks.nameFolder(id),'itemId':id,'icon':'','parentId':'bookmarksList'}
+			var ifFolder = true;
+			console.log('getAllBookmarks: takeABookmarks send');
+			openMenuTabWorker.port.emit('takeABookmark',[aBookmark,ifFolder]);
+			//console.log("getAllBookmarks: sent takeABookmark "+ aBookmark.title);
+			bookmarks.getFoldersChildren(id);
+		}
+	}catch(e){
+		console.log('getAllBookmarks: Error! ' + e.toString());
+	}
+
+	
+}
+
+
+
+function takeABookmark(bookmarkToShow){
+	try{
+		var aBookmark = bookmarkToShow[0];
+		var ifFolder = bookmarkToShow[1];
+		var bookmarkToSend = {};
+		bookmarkToSend.itemId = aBookmark.itemId;
+		bookmarkToSend.title = aBookmark.title;
+		bookmarkToSend.icon = aBookmark.icon;
+		bookmarkToSend.parentId = aBookmark.parent.itemId;
+		if (!ifFolder){
+			//If not a folder, then there is an url
+			//console.log("Not a folder.");
+			bookmarkToSend.url = aBookmark.uri;
+			//favicon.getFavicon(aBookmark.uri);
+		}
+		openMenuTabWorker.port.emit('takeABookmark',[bookmarkToSend,ifFolder]);
+		//console.log("takeABookmark: sent takeABookmark " + bookmarkToSend.url);
+	
+	}catch(e){
+		console.log('takeABookmark: Error! '+e.toString());
+	}
+	/*var ifFolder = things[1];
+	if (ifFolder){
+		console.log("<ul>"+things[0].title);
+	}
+	else{
+		console.log("<li>"+things[0].title);
+	}*/
+
+}
+
+//Get all the history.
+function getAllHistory(){
+	console.log('Getting history....');
+	var historyList = history.queryHistory();
+	try{	
+		openMenuTabWorker.port.emit('getTableReady','history');
+		openMenuTabWorker.port.emit('takeAllHistory',historyList);
+	}catch(e){
+		console.log("getAllHistory: ERROR! " + e.toString());
+	}
+
+
+}
+
+//Open the tab with the menu:
+function openMenu(msg){
+	tabs.open({
+		url: data.url('myPage.html')
+	});
+	/*tabs.on('load', function(tab) {
+		listSavedTabs();
+	});*/	
+	
+	pageMod.PageMod({
+		include: data.url('myPage.html'),
+		contentStyleFile: data.url('myPageStyle.css'),
+		contentScriptWhen: 'ready',
+		contentScriptFile: data.url('myPageScript.js'),
+		onAttach: function onAttach(worker) {
+			openMenuTabWorker = worker;
+			console.log(openMenuTabWorker.tab.title);
+			openMenuTabWorker.port.emit('start','Bookmarks');
+			openMenuTabWorker.port.on('cellClicked',function(clickedElement){
+				
+				var nodeName = clickedElement.node;
+				var nodeId = clickedElement.id;
+				console.log('cellClicked received = ' + clickedElement.node + ','+clickedElement.id);
+				if (nodeId == 'tabsCell'){
+					console.log('\r\n\r\n tabsCell');
+					//console.log('Here nodeName = '+nodeName);
+					//console.log('Here nodeId = '+nodeId);
+					//List the saved tabs:
+					listSavedTabs();
+					
+				}
+				else if (nodeName == 'Bookmarks'){
+					if (nodeId == 'bookmarksCell'){
+						console.log('****bookmarksCell****');
+						console.log('Send initHiddenRow');
+						openMenuTabWorker.port.emit('initHiddenRow');
+					}
+					console.log('\r\n\r\n Bookmarks');
+					//console.log('Here nodeName = '+nodeName);
+					//console.log('Here nodeId = '+nodeId);
+					console.log('Calling getAllBookmarks()');
+					getAllBookmarks();
+				}
+				else if (nodeName == 'History'){
+					if (nodeId == 'historyCell'){
+						console.log('****historyCell****');
+						console.log('Send initHiddenRow');
+						openMenuTabWorker.port.emit('initHiddenRow');
+					}
+					console.log('\r\n\r\n History');
+					//console.log('Here nodeName = '+nodeName);
+					//console.log('Here nodeId = '+nodeId);
+					console.log('Calling getAllHistory()');
+					getAllHistory();
+				}
+				else if (nodeName == 'Saved Bookmarks'){
+					console.log('\r\n\r\n *********Saved Bookmarks');
+					//console.log('Here nodeName = '+nodeName);
+					//console.log('Here nodeId = '+nodeId);
+					//console.log("SAVED BOOKMARKS!");
+					listSavedBookmarks();
+				}
+				else if (nodeName == '************Saved History'){
+					console.log('\r\n\r\n');
+					console.log('Here nodeName = '+nodeName);
+					console.log('Here nodeId = '+nodeId);
+					console.log("SAVED HISTORY");
+					listSavedHistory();
+				}
+				
+				
+			});
+			//openMenuWorker.port.emit('msg','Hola');
+	  	}
+	});
+
+
+
+}
+
+
+//Handle the context menu:
+function handleContextMenu(clickedDetails){
+	var clickedNode = clickedDetails[0];
+	var contextLabel = clickedDetails[1];
+	
+	
+	/*console.log("Clicked title " + clickedNode.title);
+	console.log("LABEL " + contextLabel);*/
+	var dataToSave = [clickedNode];
+	if (contextLabel == 'Save this Bookmark'){
+		gapi.searchFile(BOOKMARKS_FILE, dataToSave, access_token);
+	}
+	else{
+		gapi.searchFile(HISTORY_FILE, dataToSave, access_token);
+	}
+}
+
+
 
 
 
@@ -669,16 +910,24 @@ function handleDownloadCompleted(downloadData){
 
 exports.main = function(options, callbacks) {
     //Add the tab context menu:
-    xulControl.addTabMenu();
+    xulControl.addAllOptions();
     //Add the save all tabs menu item in the tool menu
-    xulControl.addSaveAllTabsMenu();
+    //xulControl.addSaveAllTabsMenu();
      
     /*Listen for the events*/
     //The module xulControl informs us when the user right clicks the tab. 
     xulControl.on('tabContextClicked',saveTabs);
     //The module xulControl informs us when the save all menu item is clicked.
     xulControl.on('saveAllTabsClicked',saveTabs);
+    //The module xulControl informs us when the open menu item is clicked.
+    xulControl.on('openMenuClicked',openMenu);
     
+    //Whenever the context menu is clicked:
+    contextMenu.addContextMenu('Save this');
+    contextMenu.on('contextClicked',handleContextMenu);
+    
+    //Whenever the bookmark sends us information:
+    bookmarks.on('take',takeABookmark);
     //When the user is unauthorized:
     gapi.on('Unauthorized',handleUnAuth);
     //When the authentication process is completed:
