@@ -3,6 +3,9 @@ var { emit, on, once, off } = require("sdk/event/core");
 var data = require("sdk/self").data;
 var tabs = require("sdk/tabs");
 var Request = require("sdk/request").Request;
+var UIControl = require('./UIControl.js');
+
+
 /* GOOGLE DRIVE OAUTH CONSTANTS */
 const CLIENT_ID = '737302378245.apps.googleusercontent.com';
 const CLIENT_SECRET = 'rcWgBDcdt9PuVnrKGXz81Hf7';
@@ -59,11 +62,7 @@ info: synctab: Search File = {
 
 */
 
-exports.makeMessage = function(){
 
-
-
-}
 
 //var name='';
 //This is the auth function: controls the authentication process:
@@ -73,13 +72,12 @@ exports.auth = function (callersData){
 		url: URL	
 	});	
 	tabs.on('ready', function(tab) {
-		//panel.hide();
-		//console.log('READY!!!');
+		
   		tabWorker = tab.attach({
 		      contentScriptFile: data.url('google-drive-handler.js')
 	 	});
 	 	tabWorker.port.on('takeCode',function(myCode){
-			//console.log('auth: TAKE CODE');
+			
 			theCode = myCode;
 			var getAccess = Request({		
 				url: 'https://accounts.google.com/o/oauth2/token',
@@ -87,7 +85,7 @@ exports.auth = function (callersData){
 				content: {'code': myCode,'client_id':CLIENT_ID,'client_secret':CLIENT_SECRET,'redirect_uri':REDIRECT_URI_URN,'grant_type':'authorization_code'},
 				onComplete: function(response){
       					
-					//console.log('STATUS ' + response.statusText);
+					////console.log('STATUS ' + response.statusText);
 					if(response.statusText =='OK'){
 						/*
 						The response format will be:
@@ -102,111 +100,38 @@ exports.auth = function (callersData){
 						*/
 						tabWorker.port.emit('signedIn','Signed in correctly');
 				
-						//console.log('auth: Element  = '+name);
+						////console.log('auth: Element  = '+name);
 						
 						
 						try{
 							tabWorker.port.on('closeTab',function(msg){
-								tab.close();
-								emit(exports, 'authComplete', [response.json, callersData]);
-								//panel.show();
+							tab.close();
+								
+							emit(exports, 'authComplete', [response.json, callersData]);
+								
 		
 							});
-						}catch(e){console.log('Shut down!!');}
-						
-						
-						
-						
-						
-						/*
-						access_token = response.json.access_token;
-						token_type = response.json.token_type;
-						expires_in = response.json.expires_in;
-						id_token = response.json.id_token;
-						refresh_token = response.json.refresh_token;
-						
-						// Creates a cookie for ".example.com"
-						var url = "https://accounts.google.com";
-						var cookieString = "access_token="+access_token;+"refresh_token="+refresh_token;
-						const {Cc,Ci} = require("chrome");
-
-						var cookieUri = Cc["@mozilla.org/network/io-service;1"]
-						    .getService(Ci.nsIIOService)
-						    .newURI(url, null, null);
-
-						Cc["@mozilla.org/cookieService;1"]
-						    .getService(Ci.nsICookieService)
-						    .setCookieString(cookieUri, null, cookieString, null);
-						
-						*/
-						
-						//console.log('auth: Access completed!');
+						}catch(e){
+						}
 				
 					}		
 				}
 			});
 			getAccess.post();
-			//console.log('Posted!');
+			
 		});
 		
 	});
 	
 };
 
-//exports.auth = auth;
-
-
-/*
-
-//Get all the files from the appdata folder.
-exports.searchFile = function(fileName, dataToSave, token){
-        //var items;
-        console.log('searchFile: Searching for '+fileName);
-        console.log('searchFile: data to save ' + JSON.stringify(dataToSave));
-        var exists = false;
-        var fileId = '';
-        var downloadURL = '';
-        var request = "https://www.googleapis.com/drive/v2/files?q='appdata'+in+parents";
-        fileName = fileName + '.json'
-        var searchFor = Request({
-                url: request,
-                headers: {'Host':'www.googleapis.com','Authorization': 'Bearer '+ token},
-                onComplete: function(response){
-                        //console.log(JSON.stringify(response.json.items));
-                        //console.log('LIST ' + JSON.stringify(response.json.items));
-                        for each(var item in response.json.items){
-                        	if (item.title == fileName){
-                        		exists = true;
-                        		fileId = item.id;
-                        		downloadURL = item.downloadUrl;
-                        	}           
-                       	 }
-                       	 if(dataToSave == 'noData'){
-                       	 	console.log('searchFile: Start download ' + fileName);
-                       	 	emit(exports,'startDownload',[exists,fileId,downloadURL,fileName,dataToSave,token]);
-                       	 }
-                       	 else{
-                       	 	console.log('searchFile: Start upload ' + fileName);
-                       	 	emit(exports,'startUpload',[exists,fileId,downloadURL,fileName,dataToSave,token]);
-                       	 }     
-                       	 //startSavingData(exists,fileId,downloadURL,token);                 
-                }
-        });
-        searchFor.get();
-}
-
-/*
-exports.listen = function() {
-	console.log('MAIN');
-	this.on('startComplete',this.uploadFile);
-};
-*/
 
 //Search for specific file with the file name title.
 exports.searchFile = function(title, dataToSave, token){
-	console.log("Search File.");
+	//console.log("Search File.");
 	//If dataToSave null then there is nothing to save
-	//ElementToSave: 
+	//ElementToSave:
+	
         var exists = false;	//Lets assume that it doesn't exist.
         var request = "https://www.googleapis.com/drive/v2/files?q=title+=+'"+title+"'";
         var whoCalled = 'searchFile';
@@ -214,26 +139,20 @@ exports.searchFile = function(title, dataToSave, token){
                 url: request,
                 headers: {'Host':'www.googleapis.com','Authorization': 'Bearer '+ token},
                 onComplete: function(response){
-                	//console.log();
-                	console.log("Search File = " + response.statusText);
-                	console.log("Search File = " + response.status);
-                	//console.log("Search File = " + JSON.stringify(response.headers));
-                	//console.log("Search File = " + response.text);
+                	
                 	if (response.status == '401'){	//Invalid token; Unauthorized
-                		//auth('searchFile',[title,dataToSave]);
-                		console.log("Unauthorized.");
+                		
                 		emit(exports,'Unauthorized',[whoCalled, title, dataToSave]);
                 	}
                 	else if (response.status == '200'){ //Everything fine
                 		var dLoadURL = '';
         			var fileId = '';
 		               	if (response.json.items.length == 0){
-		               		// If there is no item then the file doesn't exist-
-		               		//console.log("Doesn't Exist " + response.text);                       		
+		               		              		
 		               	}
 		               	else{
 		               		//The files exists.
-		               		//console.log("It exists " + response.text);
+		               		   
 		               		exists = true;
 		               		dLoadURL = response.json.items[0].downloadUrl;
 		               		fileId = response.json.items[0].id;		               				
@@ -252,28 +171,24 @@ function uploadFile(uploadData){
 	//fileData = [exists, title, dataToSave, token, dLoadURL, fileId]
 	
 
-	console.log('uploadFile: UPLOAD!!!!');
+
 	var fileData = uploadData[0];
 	var dataToSave = fileData[2];
 	var token = fileData[3];
 	var resumable_sesion = uploadData[1];
-	//var token = uploadData[2];
+
 	
 	var str = JSON.stringify(dataToSave);
-	console.log("Going to upload = " + str ) ;
+
 	var session = Request({		
 		url: resumable_sesion,
 		//contentType: 'application/json; charset=UTF-8',
 		headers: {'Authorization': 'Bearer '+ token/*'Content-Length':38*/,'Content-Type':'application/json; charset=UTF-8'},
 		content: str,
 		onComplete: function(response){			
-			/*console.log('Upload file = ' + response.text);
-			console.log('Upload file status = ' + response.status);
-			console.log('Upload File status text = ' + response.statusText);
-			console.log('Headers = ' + JSON.stringify(response.headers));*/
-			console.log('uploadFile: Upload completed!!');
+			
 			resumable_sesion = response.headers.Location;
-			//var elementToSave = uploadData[3];
+
 			emit(exports, 'saveComplete', [fileData, resumable_sesion]); 
 		}
 	
@@ -289,14 +204,12 @@ exports.startUpload = function startUpload(fileData){
 	var fileName = fileData[1];
 	var dataToSave = fileData[2];
 	var token = fileData[3];
-	//var elementToSave = fileData[6];
-	/*var dataToSave = fileData[4];
-	var token = fileData[5];*/
+	
 	
 	
 	if (!exists){		
 		//If it is a new file then create it:
-		console.log('handleSave: NO EXSITE '+ fileName);
+		//console.log('handleSave: NO EXSITE '+ fileName);
 		var parents = [{'id':'appdata'}];
 		var j = {'title': fileName,'parents':parents};
 		var str = JSON.stringify(j);
@@ -306,20 +219,9 @@ exports.startUpload = function startUpload(fileData){
 			headers: {'Host':'www.googleapis.com','Authorization': 'Bearer '+ token,'Content-Length':38,'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':'application/json'/*,'X-Upload-Content-Length':2000000*/},
 			content: str,
 			onComplete: function(response){
-				console.log('Start Upload file = ' + response.statusText+'\r\n\r\n');
-				/*console.log('Start Upload file status = ' + response.status+'\r\n\r\n');
-				console.log('Start Upload File status text = ' + response.statusText+'\r\n\r\n');
-				console.log('Start Headers = ' + JSON.stringify(response.headers+'\r\n\r\n'));*/
+				
 				resumable_sesion_uri = response.headers.Location;
-				//console.log(resumable_sesion_uri);
-				//this.uploadFile(dataToSave, resumable_sesion_uri, token);
-				//this.listen;
-				//emit(exports, 'startComplete', [dataToSave, resumable_sesion_uri, token]);
-				/*
-				var dataToSave = uploadData[0];
-				var resumable_sesion = uploadData[1];
-				var token = uploadData[2];
-				*/
+				
 				
 				uploadFile([fileData, resumable_sesion_uri]);
 				
@@ -333,21 +235,16 @@ exports.startUpload = function startUpload(fileData){
 		var fileId = fileData[5];
 		//Try to just add lines, not upload a new file.
 		//First step: Start a resumable session:
-		console.log('handleSave: Existe ' + fileName );
+		
 		var session = Request({                
 		        url: 'https://www.googleapis.com/upload/drive/v2/files/'+fileId+'?uploadType=resumable',
 		        //contentType: 'application/json; charset=UTF-8',
 		        headers: {'Host':'www.googleapis.com','Authorization': 'Bearer '+ token/*,'Content-Length':38,'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':'application/json'/*,'X-Upload-Content-Length':2000000*/},
 		        //content: str,
 		        onComplete: function(response){
-		                console.log('Start Upload file = ' + response.statusText+'\r\n\r\n');
-				/*console.log('Start Upload file status = ' + response.status+'\r\n\r\n');
-				console.log('Start Upload File status text = ' + response.statusText+'\r\n\r\n');
-				console.log('Start Headers = ' + JSON.stringify(response.headers+'\r\n\r\n'));*/
+		                
 		                resumable_sesion_uri = response.headers.Location;
-		                //this.uploadFile(dataToSave, resumable_sesion_uri, token);
-		                //emit(exports, 'startComplete', [dataToSave, resumable_sesion_uri, token ]); 
-		                //this.listen;     
+		                 
 		                uploadFile([fileData, resumable_sesion_uri]);      
 		        }        
 		});
@@ -358,11 +255,7 @@ exports.startUpload = function startUpload(fileData){
 
 
 
-/*exports.saveData = function(fileName, dataToSave,token, resumable_sesion_uri){
 
-	this.searchFile(fileName, dataToSave, token);
-	this.on('startUpload',this.handleSave);
-}*/
 
 
 
@@ -382,10 +275,7 @@ grant_type=refresh_token
 
 */
 
-exports.refreshToken = function(){
-	
 
-}
 
 exports.downloadData = function(fileData, action){
 	/*fileData = [exists, title, dataToSave, token, dLoadURL, fileId]*/
@@ -396,55 +286,18 @@ exports.downloadData = function(fileData, action){
                 url: downloadURL,
                 headers: {'Authorization': 'Bearer '+ token},
                 onComplete: function(response){
-                       // console.log("downloadData: Downloaded data = "  response.text);
-                        console.log("downloadData: status " + response.status);
-                        console.log("downloadData: status text " + response.statusText);
-                        //console.log("downloadData: Headers " + JSON.stringify(response.headers));
-                       // console.log();
+                       
                        if(response.status == 401){
-                       		//refresh_token
-                       		//emit(exports,'auth',[fileName, downloadURL]);
+                       		
                        		emit(exports,'Unauthorized',[whoCalls, fileData, action]);
                        
                        }
                        else{
                        		//If it is download the datas and update the file then:
+                       	
                        		
-                       			//Update the file with the given data
-                       			//var title = fileData[1];
-                       			//var dataToSave = fileData[2];
-                       			/*
-                       			try{
-                       			var guardarDatos = JSON.parse(response.text);
-		                console.log('DATA = ' +typeof(guardarDatos)+'   ' + JSON.stringify(guardarDatos));
-		                var anArray = ['Hola 2','Yo 2','Soy 2','Shweta 2'];
-				var j = {'title':'new 2','author':'nobody 2','array':anArray};
-				guardarDatos.obj.push(j);
-				var str = JSON.stringify(guardarDatos);
-				startUpdateFile(str);
-					try{
-						var toSave = JSON.parse(response.text);					
-					}catch(e){
-						console.log(e.toString());
-						var toSave = response.text;
-					}
-					if (title == TABS_FILE){
-						toSave.tabs.push(dataToSave);						
-					}
-					else if (title == BOOKMARKS_FILE){
-						toSave.bookmarks.push(dataToSave);
-					}
-					else if (title == HISTORY_FILE){
-						toSave.history.push(dataToSave);
-					}
-					fileData[2] = toSave;
-                       			startUpload(fileData);*/
-                       			
-                       		
-                       		
-                       		
-                       			//If it is just download the datas then:
-		               		emit(exports,'downloadComplete',[fileData, action, response.text]);
+                       		//If it is just download the datas then:
+		               	emit(exports,'downloadComplete',[fileData, action, response.text]);
 		              
 		              
                        		
@@ -457,32 +310,11 @@ exports.downloadData = function(fileData, action){
         download.get();
 }
 
-/*
-exports.handleData = function(fileData){
-	
-	var exists = fileData[0];
-	var fileId = fileData[1];
-	var downloadURL = fileData[2];
-	var fileName = fileData[3];
-	var dataToSave = fileData[4];
-	var token = fileData[5];
-	
-	if (exists){
-		console.log('handleData: Existe ' + fileName);
-		this.downloadData(fileName, downloadURL, token);
-	}
-	else{
-		console.log('handleData: No EXISTE ' + fileName);
-		emit(exports,'cannotDownload',fileName);
-	}
 
-
-}
-*/
 
 exports.getData = function(fileName, token){
 	this.searchFile(fileName, null, token, null)
-	//this.on('startDownload',this.handleData); 
+	
 }
 
 

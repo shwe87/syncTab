@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html>
+<head>
+<meta name="HandheldFriendly" content="true" />
+<meta name="viewport" content="width=device-width, height=device-height, user-scalable=no" />
+</head>
 <title>
 Synch & Share
 </title>
@@ -8,7 +12,7 @@ Synch & Share
 
 <br>
 <br>
-<center><div id="loading"><div><center>
+<center><div id="loading"></div><center>
 <br>
 <br>
 <center>

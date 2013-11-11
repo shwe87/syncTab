@@ -1,0 +1,101 @@
+const {Ci,Cc} = require("chrome");
+var { emit, on, once, off } = require("sdk/event/core");
+exports.on = on.bind(null, exports);
+exports.once = once.bind(null, exports);
+exports.removeListener = function removeListener(type, listener) {
+  off(exports, type, listener);
+};
+
+/*
+var mediator = Cc['@mozilla.org/appshell/window-mediator;1'].getService(Ci.nsIWindowMediator);
+//Get the window
+var thisWindow = mediator.getMostRecentWindow("navigator:browser");
+*/
+
+var menuId;
+//var gWindow;
+//var uuid;
+
+
+function loadIntoWindow(window) {
+  if (!window)
+    return;
+  menuId = window.NativeWindow.menu.add("Sync", null, function() { /*showToast(window);*/
+  	//window.NativeWindow.toast.show("Showing you a toast", "short");
+  	emit(exports,'menuClicked',window);
+  	showDoorhanger(window);
+
+  	
+  
+   });
+   
+  let label = "Show HTML";
+  let selector =  window.NativeWindow.contextmenus.SelectorContext("*");
+  menuID = window.NativeWindow.contextmenus.add(label, selector, function(target) {      
+    window.NativeWindow.toast.show(target.outerHTML, "short");       
+  }); 
+  
+  
+  // DO SOMETHING HERE (create UI)
+}
+
+
+function showDoorhanger(aWindow) {
+  buttons = [
+    {
+      label: "Button 1",
+      callback: function() {
+        aWindow.NativeWindow.toast.show("Button 1 was tapped", "short");
+      }
+    } , {
+      label: "Button 2",
+      callback: function() {
+        aWindow.NativeWindow.toast.show("Button 2 was tapped", "short");
+      }
+    }];
+
+  aWindow.NativeWindow.doorhanger.show("Showing a doorhanger with two button choices.", "doorhanger-test", buttons);
+}
+
+
+var windowListener = {
+  onOpenWindow: function(aWindow) {
+    // Wait for the window to finish loading
+    let domWindow = aWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+    domWindow.addEventListener("load", function onLoad() {
+      domWindow.removeEventListener("load", onLoad, false);
+      loadIntoWindow(domWindow);
+    }, false);
+  },
+ 
+  onCloseWindow: function(aWindow) {},
+  onWindowTitleChange: function(aWindow, aTitle) {}
+};
+
+
+
+
+function startup() {
+  let wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(Ci.nsIWindowMediator);
+
+  // Load into any existing windows
+  let windows = wm.getEnumerator("navigator:browser");
+  while (windows.hasMoreElements()) {
+    let domWindow = windows.getNext().QueryInterface(Ci.nsIDOMWindow);
+    loadIntoWindow(domWindow);
+  }
+
+  // Load into any new windows
+  wm.addListener(windowListener);
+  
+
+}
+
+function showToast(msg) {
+	
+	thisWindow.NativeWindow.toast.show(msg, "long");
+}
+
+
+exports.startup = startup;
+exports.showToast = showToast;

@@ -7,10 +7,10 @@ self.port.on('alreadySaved',function(message){
 	var text = document.createTextNode(message);
 	div.appendChild(text);
 	if (body.childNodes.length == 0){
-		console.log("There is none!!");
+		//console.log("There is none!!");
 	}
 	else{
-		console.log("ChildNodes = " + body.childNodes.length);
+		//console.log("ChildNodes = " + body.childNodes.length);
 	}
 	document.insertBefore(div, body.childNodes[0]);*/
 	/*
@@ -23,7 +23,7 @@ self.port.on('alreadySaved',function(message){
 	for each (var title in message){
 		msg = msg + title + "\n";	
 	}
-	alert(msg);
+	window.alert(msg);
 
 
 	/*
@@ -66,7 +66,7 @@ self.port.on('alreadySaved',function(message){
 
 self.port.on('savedCompletely',function(message){
 
-	alert(message);
+	window.alert(message);
 
 
 });
@@ -75,7 +75,7 @@ self.port.on('savedCompletely',function(message){
 
 
 self.port.on('authenticated',function(message){
-	console.log("Authenticated!!\r\n\r\n");
+	//console.log("Authenticated!!\r\n\r\n");
 
-	alert(message);
+	window.alert(message);
 });

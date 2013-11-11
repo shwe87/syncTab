@@ -9,6 +9,7 @@ self.port.on('signedIn',function(msg){
 	document.body.innerHTML = msg;
 	//tab.close();
 	self.port.emit('closeTab','close');
+	window.alert('Tab closed!!!!');
 });
 
 self.on("detach", function() {
