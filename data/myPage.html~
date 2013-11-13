@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html>
+<head >
+
+
+
+
+</head>
 <title>
 Synch & Share
 </title>
@@ -8,7 +14,7 @@ Synch & Share
 
 <br>
 <br>
-<center><div id="loading"><div><center>
+<center><div id="loading"></div><center>
 <br>
 <br>
 <center>
@@ -63,6 +69,15 @@ Synch & Share
 </tr>
 </table> 
 </center>
+
+<!--The personal dialog box:-->
+<div id="myDialogBox" visibility= "hidden">
+  <div>
+   <p id="DlgContent">Choose one to log in:</p>
+   <button id="dropBoxButton" class="myDialogButton"><button>
+   <button id="googleDriveButton" class="myDialogButton"><button>
+  </div>
+</div>
 </body>
 
 </html>

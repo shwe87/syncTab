@@ -10,6 +10,7 @@
 
 
 <center><h3><p id="message"></p></h3></center>
+
 <ul id="tabs">
 </ul>
 <br><br>
@@ -41,6 +42,13 @@
 </ul>
 
 <input type="button" id="saveHistory" value="Save history" style="display : none">
-
+<!--The personal dialog box:-->
+<div id="myDialogBox" visibility= "hidden">
+  <div>
+   <p id="DlgContent">Choose one to log in:</p>
+   <button id="dropBoxButton"><button>
+   <button id="googleDriveButton"><button>
+  </div>
+</div>
 </body>
 </html>
